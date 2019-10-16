@@ -78,7 +78,39 @@ public class DAO {
 	 */
 	public void createInvoice(CustomerEntity customer, int[] productIDs, int[] quantities)
 		throws Exception {
-		throw new UnsupportedOperationException("Pas encore implémenté");
+            
+            String sql = "INSERT INTO INVOICE (CustomerID) VALUES(?)";
+            String sql2 = "INSERT INTO ITEM VALUES(?,?,?,?,?)";
+            String sql3 = "SELECT Price FROM PRODUCT WHERE ID = ?";
+            
+            try (Connection connection = myDataSource.getConnection();
+		PreparedStatement stmt = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement stmt2 = connection.prepareStatement(sql2,Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement stmt3 = connection.prepareStatement(sql3,Statement.RETURN_GENERATED_KEYS);) {
+                
+                stmt.setInt(1, customer.getCustomerId());
+                stmt.executeUpdate();
+                ResultSet invoiceID = stmt.getGeneratedKeys();
+                invoiceID.next();
+                
+                for (int i=0; i<productIDs.length; i++) {
+                    float resultPrice = 0;
+                    stmt3.setInt(1,productIDs[i]);
+                    ResultSet rsPrice = stmt.executeQuery(sql3);
+                    rsPrice.next();
+                    resultPrice = rsPrice.getFloat("Price");
+                    
+                    stmt2.setInt(1,invoiceID.getInt(0));
+                    stmt2.setInt(2,i);
+                    stmt2.setInt(3, productIDs[i]);
+                    stmt2.setInt(4,quantities[i]);
+                    stmt2.setFloat(5,resultPrice*quantities[i]);
+                    stmt2.executeUpdate();
+                } 
+                
+                
+            }
+
 	}
 
 	/**
